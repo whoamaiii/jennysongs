@@ -48,7 +48,7 @@ async function getAccessToken() {
   }
 }
 
-exports.handler = async (event, context) => {
+exports.handler = async (_event, _context) => {
   try {
     const token = await getAccessToken();
     return {

@@ -1,0 +1,7 @@
+node_modules/
+.netlify/
+public/
+docs/
+dist/
+coverage/
+*.min.js 

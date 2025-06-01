@@ -77,9 +77,10 @@
         <div style="text-align: center; margin-bottom: 20px;">
             <button onclick="loadPlaylist()">Load TIDAL Playlist</button>
             <button onclick="testConnection()">Test Server Connection</button>
+            <button onclick="logout()" style="background: #666;">Logout</button>
         </div>
         
-        <div id="status" class="loading">Click "Load TIDAL Playlist" to fetch your romantic songs...</div>
+        <div id="status" class="loading">Loading your romantic songs...</div>
         
         <div id="playlist" class="playlist" style="display: none;">
             <h2>🎵 Your Romantic Playlist</h2>
@@ -98,6 +99,12 @@
                 if (response.ok) {
                     statusDiv.innerHTML = '✅ Server is running and responding!';
                     statusDiv.className = '';
+                } else if (response.status === 302) {
+                    statusDiv.innerHTML = '🔐 Please log in with TIDAL to access your playlist';
+                    statusDiv.className = 'error';
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 2000);
                 } else {
                     statusDiv.innerHTML = `⚠️ Server responded with status: ${response.status}`;
                     statusDiv.className = 'error';
@@ -106,6 +113,15 @@
                 statusDiv.innerHTML = `❌ Connection error: ${error.message}`;
                 statusDiv.className = 'error';
             }
+        }
+
+        function logout() {
+            // Clear cookies by setting them to expire
+            document.cookie = 'tidalUser=; Max-Age=0; Path=/';
+            document.cookie = 'tidalRefresh=; Max-Age=0; Path=/';
+            
+            // Redirect to login page
+            window.location.href = '/login.html';
         }
 
         async function loadPlaylist() {
@@ -120,6 +136,16 @@
             try {
                 const response = await fetch('/.netlify/functions/get-playlist');
                 
+                if (response.status === 302) {
+                    // User needs to authenticate
+                    statusDiv.innerHTML = '🔐 Please log in with TIDAL to access your playlist';
+                    statusDiv.className = 'error';
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 2000);
+                    return;
+                }
+                
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
@@ -130,14 +156,16 @@
                     throw new Error(data.error);
                 }
                 
-                statusDiv.innerHTML = `✅ Successfully loaded ${data.tracks?.length || 0} songs from your TIDAL playlist!`;
+                statusDiv.innerHTML = `✅ Successfully loaded ${data.length || 0} songs from your TIDAL playlist!`;
                 statusDiv.className = '';
                 
-                if (data.tracks && data.tracks.length > 0) {
-                    songsDiv.innerHTML = data.tracks.map(track => `
+                if (data && data.length > 0) {
+                    songsDiv.innerHTML = data.map(track => `
                         <div class="song">
                             <div class="song-title">${track.title}</div>
                             <div class="song-artist">by ${track.artist}</div>
+                            ${track.album ? `<div style="color: #ddd; font-size: 14px; margin-top: 3px;">Album: ${track.album}</div>` : ''}
+                            ${track.previewUrl ? `<div style="margin-top: 8px;"><button onclick="playPreview('${track.previewUrl}')" style="background: #4CAF50; font-size: 14px; padding: 6px 12px;">🎵 Preview</button></div>` : ''}
                         </div>
                     `).join('');
                     
@@ -152,9 +180,34 @@
                 console.error('Playlist loading error:', error);
             }
         }
+
+        let currentAudio = null;
+
+        function playPreview(previewUrl) {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
+            if (previewUrl) {
+                currentAudio = new Audio(previewUrl);
+                currentAudio.play().catch(error => {
+                    console.error('Error playing preview:', error);
+                    alert('Unable to play preview. This may be due to browser restrictions or the preview not being available.');
+                });
+                
+                // Stop after 30 seconds
+                setTimeout(() => {
+                    if (currentAudio) {
+                        currentAudio.pause();
+                        currentAudio = null;
+                    }
+                }, 30000);
+            }
+        }
         
-        // Auto-test connection on page load
-        window.addEventListener('load', testConnection);
+        // Auto-load playlist on page load
+        window.addEventListener('load', loadPlaylist);
     </script>
 </body>
 </html>

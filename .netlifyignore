@@ -1,0 +1,8 @@
+**/__tests__/**
+docs/**
+*.test.js
+*.spec.js
+jest.config.js
+.eslintrc.js
+.eslintignore
+.github/** 
