@@ -1,0 +1,19 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "npm run ci && npm run build"
+
+[dev]
+  port = 8888
+  functionsPort = 9000
+  targetPort = 3999
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+# Functions are automatically served at /.netlify/functions/
+# No redirects needed for function endpoints

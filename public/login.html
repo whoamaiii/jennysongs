@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TIDAL Login - Jenny's Romantic Songs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-container {
+            text-align: center;
+            padding: 2rem;
+            background: #2a2a2a;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+        }
+        .login-button {
+            background-color: #00ffff;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 1rem;
+            transition: background-color 0.3s;
+        }
+        .login-button:hover {
+            background-color: #00cccc;
+        }
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 4px;
+            display: none;
+        }
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Jenny's Romantic Songs</h1>
+        <p>Login with your TIDAL account to access the playlist</p>
+        <a href="/.netlify/functions/tidal-login" class="login-button">Login with TIDAL</a>
+        
+        <div id="error" class="error-message">
+            <p id="error-text"></p>
+        </div>
+    </div>
+
+    <script>
+        // Check for error parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const error = urlParams.get('error');
+        
+        if (error) {
+            const errorDiv = document.getElementById('error');
+            const errorText = document.getElementById('error-text');
+            
+            errorDiv.classList.add('show');
+            
+            switch(error) {
+                case 'authorization_denied':
+                    errorText.textContent = 'Authorization was denied. Please try again.';
+                    break;
+                case 'token_exchange_failed':
+                    errorText.textContent = 'Failed to complete login. Please try again.';
+                    break;
+                default:
+                    errorText.textContent = 'An error occurred during login. Please try again.';
+            }
+        }
+
+        // Check if already logged in
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+            const [key, value] = cookie.trim().split('=');
+            acc[key] = value;
+            return acc;
+        }, {});
+
+        if (cookies.tidalUser && cookies.tidalRefresh) {
+            // Already logged in, redirect to main app
+            window.location.href = '/index.html';
+        }
+    </script>
+</body>
+</html>

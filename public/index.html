@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <title>Our Songs ❤️</title>
+    
+    <!-- iOS PWA tags -->
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='50%' x='50%' text-anchor='middle' dominant-baseline='middle' font-size='50'>💕</text></svg>">
+    <meta name="apple-mobile-web-app-title" content="Our Songs">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --safe-area-inset-top: env(safe-area-inset-top);
+            --safe-area-inset-bottom: env(safe-area-inset-bottom);
+            --primary-gradient: linear-gradient(135deg, #FF006E, #8338EC, #3A86FF);
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated gradient background */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #FF006E, #8338EC, #3A86FF, #FF006E);
+            background-size: 300% 300%;
+            animation: gradientShift 15s ease infinite;
+            opacity: 0.9;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.9' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' /%3E%3C/svg%3E");
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-area-inset-top);
+            padding-bottom: var(--safe-area-inset-bottom);
+        }
+
+        /* Header */
+        .header {
+            padding: 20px 20px 0;
+            text-align: center;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .main-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0.8));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 400;
+        }
+
+        /* Swipeable cards container */
+        .cards-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-stack {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            height: 500px;
+        }
+
+        .song-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: var(--card-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: grab;
+            animation: cardEntry 0.6s ease-out;
+        }
+
+        @keyframes cardEntry {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .song-card.dragging {
+            cursor: grabbing;
+            transition: none;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: auto;
+        }
+
+        .time-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .time-label {
+            flex: 1;
+        }
+
+        .journey-type {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .journey-time {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .song-duration {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        .album-art {
+            width: 100%;
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 20px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .album-art::before {
+            content: '♪';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px;
+            opacity: 0.3;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.3; }
+            50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.5; }
+        }
+
+        .song-info {
+            text-align: center;
+        }
+
+        .song-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1.2;
+        }
+
+        .song-artist {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 5px;
+        }
+
+        .song-album {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Swipe indicators */
+        .swipe-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .dot.active {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.2);
+        }
+
+        /* Bottom message */
+        .bottom-message {
+            padding: 20px;
+            text-align: center;
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .love-message {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            font-style: italic;
+            line-height: 1.4;
+        }
+
+        .heart-beat {
+            display: inline-block;
+            animation: heartBeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            10%, 30% { transform: scale(1.1); }
+            20% { transform: scale(1.15); }
+        }
+
+        /* Loading state */
+        .loading-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Haptic feedback visual */
+        .haptic-feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3), transparent);
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .haptic-feedback.active {
+            opacity: 1;
+        }
+
+        /* API status indicator */
+        .api-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 8px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 50;
+        }
+
+        .api-status.tidal {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: rgba(0, 255, 0, 0.3);
+            color: rgba(0, 255, 0, 0.9);
+        }
+
+        .api-status.fallback {
+            background: rgba(255, 165, 0, 0.2);
+            border-color: rgba(255, 165, 0, 0.3);
+            color: rgba(255, 165, 0, 0.9);
+        }
+
+        /* Responsive adjustments */
+        @media (max-height: 700px) {
+            .card-stack {
+                height: 420px;
+            }
+            
+            .album-art {
+                margin: 20px 0;
+            }
+            
+            .main-title {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    <div class="noise-overlay"></div>
+    
+    <div class="app-container">
+        <div class="api-status" id="apiStatus">Loading...</div>
+        
+        <header class="header">
+            <div class="date-badge" id="dateBadge">Day 180</div>
+            <h1 class="main-title">Our Daily Songs</h1>
+            <p class="subtitle">Swipe to explore today's journey</p>
+        </header>
+        
+        <div class="cards-container">
+            <div class="card-stack" id="cardStack">
+                <!-- Cards will be inserted here -->
+            </div>
+            
+            <div class="swipe-indicator">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+        
+        <div class="bottom-message">
+            <p class="love-message">
+                Every song, a memory<br>
+                Every day, a new chapter <span class="heart-beat">❤️</span>
+            </p>
+        </div>
+    </div>
+    
+    <div class="loading-container" id="loadingScreen">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div class="haptic-feedback" id="hapticFeedback"></div>
+
+    <script>
+        // Configuration
+        const ANNIVERSARY_DATE = new Date('2024-11-30');
+        
+        // Fallback songs if API completely fails
+        const fallbackSongs = [
+            {
+                id: "fallback-1",
+                title: "Perfect",
+                artist: "Ed Sheeran",
+                album: "÷ (Divide)",
+                classification: "evening",
+                duration: 263
+            },
+            {
+                id: "fallback-2", 
+                title: "Thinking Out Loud",
+                artist: "Ed Sheeran",
+                album: "x (Multiply)",
+                classification: "morning",
+                duration: 281
+            },
+            {
+                id: "fallback-3",
+                title: "All of Me",
+                artist: "John Legend",
+                album: "Love in the Future",
+                classification: "evening",
+                duration: 269
+            }
+        ];
+        
+        let currentCardIndex = 0;
+        let isAnimating = false;
+        let currentSongs = [];
+        
+        // Calculate days together
+        function calculateDaysTogether() {
+            const today = new Date();
+            const diffTime = Math.abs(today - ANNIVERSARY_DATE);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+        
+        // Fetch playlist from Netlify function
+        async function fetchPlaylistSongs() {
+            try {
+                console.log('🎵 Fetching songs from TIDAL via Netlify function...');
+                updateApiStatus('Loading...', 'loading');
+                
+                const response = await fetch('/.netlify/functions/get-playlist');
+                
+                if (!response.ok) {
+                    throw new Error(`API request failed: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('📀 Playlist response:', data);
+                
+                if (data.tracks && data.tracks.length > 0) {
+                    updateApiStatus(`TIDAL API (${data.tracks.length} songs)`, 'tidal');
+                    return data.tracks;
+                }
+                
+                throw new Error('No tracks in response');
+                
+            } catch (error) {
+                console.error('❌ Netlify function failed:', error);
+                updateApiStatus('Using Fallback Songs', 'fallback');
+                return fallbackSongs;
+            }
+        }
+        
+        function removeDuplicates(array, key) {
+            return array.filter((item, index, self) => 
+                index === self.findIndex(t => t[key] === item[key])
+            );
+        }
+        
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+        
+        async function getDailySongs() {
+            try {
+                const playlistSongs = await fetchPlaylistSongs();
+                
+                if (playlistSongs.length > 0) {
+                    // Shuffle and take up to 6 songs for variety
+                    const shuffledSongs = shuffleArray(playlistSongs);
+                    const dailySongs = shuffledSongs.slice(0, Math.min(6, shuffledSongs.length));
+                    
+                    console.log('✅ Using songs:', dailySongs.map(s => s.title));
+                    return dailySongs;
+                }
+                
+                throw new Error('No songs available');
+                
+            } catch (error) {
+                console.error('❌ Failed to get daily songs:', error);
+                return fallbackSongs.slice(0, 3);
+            }
+        }
+        
+        // Update API status indicator
+        function updateApiStatus(text, type) {
+            const apiStatus = document.getElementById('apiStatus');
+            apiStatus.textContent = text;
+            apiStatus.className = `api-status ${type}`;
+        }
+        
+        // Update date badge
+        function updateDateBadge() {
+            const days = calculateDaysTogether();
+            document.getElementById('dateBadge').textContent = `Day ${days}`;
+        }
+        
+        // Create song card HTML
+        function createSongCard(song, index) {
+            const card = document.createElement('div');
+            card.className = 'song-card';
+            card.style.zIndex = 2 - index;
+            if (index > 0) {
+                card.style.transform = `scale(${1 - index * 0.05}) translateY(${index * 10}px)`;
+                card.style.opacity = '0.7';
+            }
+            
+            // Format duration if available
+            const formatDuration = (seconds) => {
+                if (!seconds) return '';
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            };
+            
+            const durationText = song.duration ? formatDuration(song.duration) : '';
+            
+            // Determine time of day based on classification
+            const timeOfDay = song.classification === 'morning' ? 'morning' : 'evening';
+            const emoji = timeOfDay === 'morning' ? '🌅' : '🌙';
+            const journeyText = timeOfDay === 'morning' ? 'Your journey begins' : 'Your journey home';
+            
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="time-icon">${emoji}</div>
+                    <div class="time-label">
+                        <div class="journey-type">${timeOfDay.charAt(0).toUpperCase() + timeOfDay.slice(1)}</div>
+                        <div class="journey-time">${journeyText}</div>
+                        ${durationText ? `<div class="song-duration">${durationText}</div>` : ''}
+                    </div>
+                </div>
+                
+                <div class="album-art" ${song.coverUrl ? `style="background-image: url('${song.coverUrl}'); background-size: cover; background-position: center;"` : ''}></div>
+                
+                <div class="song-info">
+                    <div class="song-title">${song.title}</div>
+                    <div class="song-artist">${song.artist}</div>
+                    <div class="song-album">${song.album}</div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Initialize cards
+        async function initializeCards() {
+            const cardStack = document.getElementById('cardStack');
+            cardStack.innerHTML = '';
+            
+            // Show loading indicator
+            showCardLoading();
+            
+            try {
+                // Get today's songs from TIDAL
+                currentSongs = await getDailySongs();
+                
+                if (currentSongs.length === 0) {
+                    // Fallback to default songs if API fails
+                    currentSongs = fallbackSongs.slice();
+                }
+                
+                // Create cards for each song
+                currentSongs.forEach((song, index) => {
+                    const card = createSongCard(song, index);
+                    cardStack.appendChild(card);
+                });
+                
+                // Add swipe listeners to the top card
+                if (cardStack.children[0]) {
+                    addSwipeListeners(cardStack.children[0]);
+                }
+                
+                // Update dots indicator
+                updateDotsIndicator();
+                
+            } catch (error) {
+                console.error('Failed to initialize cards:', error);
+                
+                // Fallback to default songs
+                currentSongs = fallbackSongs.slice();
+                
+                currentSongs.forEach((song, index) => {
+                    const card = createSongCard(song, index);
+                    cardStack.appendChild(card);
+                });
+                
+                if (cardStack.children[0]) {
+                    addSwipeListeners(cardStack.children[0]);
+                }
+            } finally {
+                hideCardLoading();
+            }
+        }
+        
+        function showCardLoading() {
+            const cardStack = document.getElementById('cardStack');
+            cardStack.innerHTML = `
+                <div class="song-card" style="display: flex; align-items: center; justify-content: center; flex-direction: column;">
+                    <div class="loading-spinner" style="margin-bottom: 20px;"></div>
+                    <div style="color: rgba(255, 255, 255, 0.8); text-align: center;">
+                        Loading your romantic playlist...<br>
+                        <small style="color: rgba(255, 255, 255, 0.6);">Fetching songs from TIDAL via Netlify</small>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function hideCardLoading() {
+            // Loading is hidden when real cards are added
+        }
+        
+        // Add swipe listeners
+        function addSwipeListeners(card) {
+            let startX = null;
+            let startY = null;
+            let currentX = null;
+            let currentY = null;
+            
+            const handleStart = (e) => {
+                if (isAnimating) return;
+                
+                const touch = e.touches ? e.touches[0] : e;
+                startX = touch.clientX;
+                startY = touch.clientY;
+                currentX = startX;
+                currentY = startY;
+                
+                card.classList.add('dragging');
+                triggerHaptic();
+            };
+            
+            const handleMove = (e) => {
+                if (!startX || isAnimating) return;
+                
+                const touch = e.touches ? e.touches[0] : e;
+                currentX = touch.clientX;
+                currentY = touch.clientY;
+                
+                const deltaX = currentX - startX;
+                const deltaY = currentY - startY;
+                const rotation = deltaX * 0.1;
+                
+                card.style.transform = `translateX(${deltaX}px) translateY(${deltaY}px) rotate(${rotation}deg)`;
+                
+                // Update opacity based on distance
+                const distance = Math.abs(deltaX);
+                const opacity = Math.max(0, 1 - distance / 200);
+                card.style.opacity = opacity;
+            };
+            
+            const handleEnd = () => {
+                if (!startX || isAnimating) return;
+                
+                const deltaX = currentX - startX;
+                const threshold = 100;
+                
+                card.classList.remove('dragging');
+                
+                if (Math.abs(deltaX) > threshold) {
+                    // Swipe detected
+                    animateCardOut(card, deltaX > 0 ? 'right' : 'left');
+                } else {
+                    // Snap back
+                    card.style.transform = '';
+                    card.style.opacity = '';
+                }
+                
+                startX = null;
+                startY = null;
+            };
+            
+            // Touch events
+            card.addEventListener('touchstart', handleStart);
+            card.addEventListener('touchmove', handleMove);
+            card.addEventListener('touchend', handleEnd);
+            
+            // Mouse events for testing
+            card.addEventListener('mousedown', handleStart);
+            card.addEventListener('mousemove', handleMove);
+            card.addEventListener('mouseup', handleEnd);
+            card.addEventListener('mouseleave', handleEnd);
+        }
+        
+        // Animate card out
+        function animateCardOut(card, direction) {
+            isAnimating = true;
+            const translateX = direction === 'right' ? '150%' : '-150%';
+            
+            card.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            card.style.transform = `translateX(${translateX}) rotate(${direction === 'right' ? 30 : -30}deg)`;
+            card.style.opacity = '0';
+            
+            setTimeout(() => {
+                // Update dots
+                currentCardIndex = (currentCardIndex + 1) % currentSongs.length;
+                updateDots();
+                
+                // If we've seen all cards, get new songs
+                if (currentCardIndex === 0) {
+                    getDailySongs().then(songs => {
+                        currentSongs = songs;
+                        initializeCards();
+                    });
+                } else {
+                    // Reset cards
+                    initializeCards();
+                }
+                
+                isAnimating = false;
+                triggerHaptic();
+            }, 500);
+        }
+        
+        // Update indicator dots
+        function updateDots() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentCardIndex);
+            });
+        }
+        
+        function updateDotsIndicator() {
+            const swipeIndicator = document.querySelector('.swipe-indicator');
+            swipeIndicator.innerHTML = '';
+            
+            currentSongs.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = `dot ${index === currentCardIndex ? 'active' : ''}`;
+                swipeIndicator.appendChild(dot);
+            });
+        }
+        
+        // Trigger haptic feedback (visual simulation)
+        function triggerHaptic() {
+            // For actual iPhone, you'd use: navigator.vibrate?.(10);
+            const haptic = document.getElementById('hapticFeedback');
+            haptic.classList.add('active');
+            setTimeout(() => haptic.classList.remove('active'), 200);
+        }
+        
+        // Hide loading screen
+        function hideLoading() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        }
+        
+        // Initialize app
+        async function init() {
+            updateDateBadge();
+            
+            // Initialize cards with TIDAL data
+            await initializeCards();
+            
+            // Hide loading after initialization
+            setTimeout(hideLoading, 500);
+            
+            // Prevent elastic scrolling on iOS
+            document.body.addEventListener('touchmove', (e) => {
+                if (e.target === document.body) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+        
+        // Start the app
+        window.addEventListener('load', init);
+        
+        // Handle resize
+        window.addEventListener('resize', () => {
+            document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
+        });
+    </script>
+</body>
+</html>

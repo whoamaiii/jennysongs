@@ -1,0 +1,16 @@
+sequenceDiagram
+  participant UI
+  participant AuthFn as /api/tidal-login
+  participant TIDAL
+  participant CB as /api/tidal-callback
+  participant Play as /api/get-playlist
+
+  UI->>AuthFn: Click "Login"
+  AuthFn-->>UI: 302 → TIDAL auth
+  UI->>TIDAL: client_id + scope
+  TIDAL-->>CB: ?code=...
+  CB->>TIDAL: POST /token
+  CB-->>UI: Set-Cookie (tidalUser, tidalRefresh) → /index.html
+  UI->>Play: fetch playlist
+  Play->>TIDAL: Bearer access
+  TIDAL-->>Play: 200 tracks

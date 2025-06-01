@@ -1,0 +1,6 @@
+graph TD
+  P[Push / PR] --> GA[GitHub Actions CI]
+  GA -->|npm run ci| TestSuite
+  TestSuite -->|pass| NetlifyDeploy
+  TestSuite -->|fail| Block
+  NetlifyDeploy -->|npm run build| ProdPreview

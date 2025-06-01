@@ -1,0 +1,9 @@
+**/__tests__/**
+docs/**
+*.test.js
+*.spec.js
+.husky/**
+eslint.config.js
+jest.config.js
+coverage/**
+.git/**

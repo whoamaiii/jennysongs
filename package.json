@@ -1,0 +1,46 @@
+{
+  "name": "jenny-romantic-songs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'No build required'",
+    "deploy": "netlify deploy --prod",
+    "test": "jest",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:watch": "jest --watch",
+    "ci": "npm run lint && npm test",
+    "lint": "eslint netlify/functions --ext .js",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "@types/jest": "^29.5.14",
+    "eslint": "^9.28.0",
+    "eslint-plugin-jest": "^28.12.0",
+    "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "netlify-cli": "^21.5.0",
+    "nock": "^14.0.5"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.js"
+    ],
+    "coverageDirectory": "./coverage",
+    "collectCoverageFrom": [
+      "netlify/functions/**/*.js",
+      "!netlify/functions/**/__tests__/**"
+    ]
+  }
+}
