@@ -55,19 +55,19 @@ async function fetchAllPlaylistTracks(playlistId, userToken, countryCode = 'US')
   return tracks;
 }
 
-// Helper function to extract token from cookies
-function extractUserToken(cookieHeader) {
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(/tidalUser=([^;]+)/);
-  return match ? match[1] : null;
-}
+// Helper function to extract token from cookies (commented out as Express handles this)
+// function extractUserToken(cookieHeader) {
+//   if (!cookieHeader) return null;
+//   const match = cookieHeader.match(/tidalUser=([^;]+)/);
+//   return match ? match[1] : null;
+// }
 
-// Helper function to extract refresh token from cookies
-function extractRefreshToken(cookieHeader) {
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(/tidalRefresh=([^;]+)/);
-  return match ? match[1] : null;
-}
+// Helper function to extract refresh token from cookies (commented out as Express handles this)
+// function extractRefreshToken(cookieHeader) {
+//   if (!cookieHeader) return null;
+//   const match = cookieHeader.match(/tidalRefresh=([^;]+)/);
+//   return match ? match[1] : null;
+// }
 
 // Helper function to get user's country code
 async function getUserCountryCode(_userToken) {

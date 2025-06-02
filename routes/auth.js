@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/login', (req, res) => {
   try {
     const clientId = process.env.TIDAL_CLIENT_ID;
-    const redirectUri = process.env.TIDAL_REDIRECT_URI || `http://localhost:8888/api/auth/callback`;
+    const redirectUri = process.env.TIDAL_REDIRECT_URI || 'http://localhost:8888/api/auth/callback';
     
     if (!clientId) {
       return res.status(400).json({ error: 'TIDAL_CLIENT_ID not configured' });
@@ -44,7 +44,7 @@ router.get('/callback', async (req, res) => {
     const data = new URLSearchParams({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: process.env.TIDAL_REDIRECT_URI || `http://localhost:8888/api/auth/callback`
+      redirect_uri: process.env.TIDAL_REDIRECT_URI || 'http://localhost:8888/api/auth/callback'
     });
 
     const auth = Buffer
